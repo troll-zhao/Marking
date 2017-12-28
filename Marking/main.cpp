@@ -14,7 +14,18 @@ using namespace std;
 using namespace cv;
 
 Mat original, image, temp;
+Mat tran;
 ofstream out;
+char judge;
+int SplitCount = 1;
+
+char *filePath = "D:\\å‘ç¥¨\\ç¥¨æ®æ‰«æ\\zengzhishui\\data";
+string imagePath = "D:\\å‘ç¥¨\\ç¥¨æ®æ‰«æ\\zengzhishui\\data\\";
+string labelPath = "D:\\å‘ç¥¨\\ç¥¨æ®æ‰«æ\\zengzhishui\\testSplitImage\\label\\";
+string SplitPath = "D:\\å‘ç¥¨\\ç¥¨æ®æ‰«æ\\zengzhishui\\testSplitImage\\SplitImage\\";
+vector<string> files;
+string file;
+string imageName;
 
 void on_mouse(int event, int x, int y, int flag, void *ustc)
 {
@@ -44,10 +55,22 @@ void on_mouse(int event, int x, int y, int flag, void *ustc)
 		end = Point(x, y);
 		curPoint = Point(x, y);
 		rectangle(image, begin, end, Scalar(0, 0, 255, 0), 1, 8, 0);
-		stringstream ss;
-		ss << begin.x << " " << begin.y << " "  << begin.x << " " << end.y << " " << end.x << " " << begin.y << " "<< end.x << " " << end.y << "\n";
-		string Stemp = ss.str();
-		out.write(Stemp.c_str(), Stemp.size());
+		if (judge == 'n' || judge == 'N')
+		{
+			stringstream ss;
+			ss << begin.x << " " << begin.y << " " << begin.x << " " << end.y << " " << end.x << " " << begin.y << " " << end.x << " " << end.y << "\n";
+			string Stemp = ss.str();
+			out.write(Stemp.c_str(), Stemp.size());
+		}
+		else
+		{
+			Mat temp(tran, Rect(begin.x, begin.y, end.x - begin.x, end.y - begin.y));
+			stringstream ss;
+			ss << SplitCount;
+			string Stemp = ss.str();
+			imwrite(SplitPath + imageName + "-" + Stemp + ".png", temp);
+			SplitCount++;
+		}
 		image.copyTo(original);
 		imshow("image", image);
 	}
@@ -55,17 +78,17 @@ void on_mouse(int event, int x, int y, int flag, void *ustc)
 
 void getFiles(string path, vector<string>& files)
 {
-	//ÎÄ¼ş¾ä±ú  
+	//æ–‡ä»¶å¥æŸ„  
 	long   hFile = 0;
-	//ÎÄ¼şĞÅÏ¢  
+	//æ–‡ä»¶ä¿¡æ¯  
 	struct _finddata_t fileinfo;
 	string p;
 	if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) != -1)
 	{
 		do
 		{
-			//Èç¹ûÊÇÄ¿Â¼,µü´úÖ®  
-			//Èç¹û²»ÊÇ,¼ÓÈëÁĞ±í  
+			//å¦‚æœæ˜¯ç›®å½•,è¿­ä»£ä¹‹  
+			//å¦‚æœä¸æ˜¯,åŠ å…¥åˆ—è¡¨  
 			if ((fileinfo.attrib &  _A_SUBDIR))
 			{
 				continue;
@@ -115,33 +138,59 @@ void SplitC(vector<string> &result, const string &str, const char &pattern)
 
 int main(void)
 {
-	char *filePath = "D:\\·¢Æ±\\Æ±¾İÉ¨Ãè\\zengzhishui\\data";
-	string imagePath = "D:\\·¢Æ±\\Æ±¾İÉ¨Ãè\\zengzhishui\\data\\";
-	string labelPath = "D:\\·¢Æ±\\Æ±¾İÉ¨Ãè\\zengzhishui\\label\\";
-	vector<string> files;
 
-	////»ñÈ¡¸ÃÂ·¾¶ÏÂµÄËùÓĞÎÄ¼ş  
+
+	////è·å–è¯¥è·¯å¾„ä¸‹çš„æ‰€æœ‰æ–‡ä»¶  
 	getFiles(filePath, files);
 
 	char str[30];
 	int size = files.size();
-	for (int i = 0; i < size; i++)
+	cout << "åˆ‡å‰²å›¾ç‰‡ï¼Ÿ(y/n)" << endl;
+	cin >> judge;
+	if (judge == 'y' || judge == 'Y')
 	{
-		string file = files[i];
-		vector<string> Name;
-		SplitC(Name, file, '\\');
-		string imageName = (*(Name.end() - 1));
-		imageName.erase(imageName.end() - 4, imageName.end());
-		out.open(labelPath + imageName + ".txt");
-		original = imread(imagePath + imageName + ".bmp");
-		namedWindow("image");
-		imshow("image", original);
-		setMouseCallback("image", on_mouse, 0);
-		char c = waitKey(0);
-		out.close();
-		if (c == ' ')
-			break;
+		for (int i = 0; i < size; i++)
+		{
+			cout << i << endl;
+			SplitCount = 1;
+			file = files[i];
+			vector<string> Name;
+			SplitC(Name, file, '\\');
+			imageName = (*(Name.end() - 1));
+			imageName.erase(imageName.end() - 4, imageName.end());
+			original = imread(imagePath + imageName + ".jpg");
+			original.copyTo(tran);
+			namedWindow("image", 0);
+			imshow("image", original);
+			setMouseCallback("image", on_mouse, 0);
+			char c = waitKey(0);
+			if (c == ' ')
+				break;
+		}
 	}
+	else
+	{
+		for (int i = 0; i < size; i++)
+		{
+			cout << i << endl;
+			file = files[i];
+			vector<string> Name;
+			SplitC(Name, file, '\\');
+			imageName = (*(Name.end() - 1));
+			imageName.erase(imageName.end() - 4, imageName.end());
+			out.open(labelPath + imageName + ".txt");
+			original = imread(imagePath + imageName + ".jpg");
+			original.copyTo(tran);
+			namedWindow("image");
+			imshow("image", original);
+			setMouseCallback("image", on_mouse, 0);
+			char c = waitKey(0);
+			out.close();
+			if (c == ' ')
+				break;
+		}
+	}
+
 
 	return 0;
 }
